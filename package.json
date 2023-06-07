@@ -1,0 +1,29 @@
+{
+  "name": "oberknecht-request",
+  "version": "0.0.1",
+  "main": "./export",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jubewe/request.git"
+  },
+  "author": "jubewe",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/jubewe/request/issues"
+  },
+  "homepage": "https://github.com/jubewe/request#readme",
+  "dependencies": {
+    "oberknecht-utils": "^1.1.9",
+    "request": "^2.88.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.2.5",
+    "@types/request": "^2.48.8",
+    "typescript": "^5.2.0-dev.20230607"
+  },
+  "description": ""
+}
