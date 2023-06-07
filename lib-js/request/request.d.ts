@@ -1,3 +1,3 @@
-/// <reference types="request" />
-import { requestCallback, requestOptions } from "../types/request";
-export declare function request(url: string, options: requestOptions | typeof requestCallback, callback?: typeof requestCallback): Promise<import("request").Response>;
+import { requestOptions } from "../types/request";
+import { RequestCallback } from "request";
+export declare function request(url: string, options: requestOptions | RequestCallback, callback?: RequestCallback): Promise<import("request").Response>;
