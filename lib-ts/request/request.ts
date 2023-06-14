@@ -4,7 +4,7 @@ import { Worker } from "worker_threads";
 import path from "path";
 import { RequestCallback, RequestResponse } from "request";
 
-export function request(url: string, options: requestOptions | RequestCallback, callback?: RequestCallback) {
+export function request(url: string, options?: requestOptions | RequestCallback, callback?: RequestCallback) {
     return new Promise<RequestResponse>((resolve, reject) => {
         if (!(url ?? undefined) && !(options ?? undefined) && !(callback ?? undefined)) throw Error("url, options and callback are undefined");
 
