@@ -1,22 +1,26 @@
 import { extendedTypeof, jsonModifiers, recreate } from "oberknecht-utils";
-import { globalOptions, requestOptions } from "../types/request";
+import {
+  globalOptions as globalOptionsType,
+  requestOptions,
+} from "../types/request";
 import { Worker } from "worker_threads";
 import path from "path";
 import { RequestCallback, RequestResponse, Response } from "request";
 let globalCallbacks: Function[] = [];
+let globalOptions = {};
 
 export function request(
   url: string,
   options?: requestOptions | RequestCallback,
   callback?: RequestCallback,
-  globalOptions?: globalOptions
+  globalOptionsAdd?: globalOptionsType
 ) {
   return new Promise<RequestResponse>((resolve, reject) => {
     if (
       !(url ?? undefined) &&
       !(options ?? undefined) &&
       !(callback ?? undefined) &&
-      !globalOptions
+      !globalOptionsAdd
     )
       throw Error("url, options and callback are undefined");
 
@@ -24,15 +28,17 @@ export function request(
     let options_ = recreate(extendedTypeof(options) !== "json" ? {} : options);
     let callback_: RequestCallback;
 
-    if (globalOptions) {
-      if (globalOptions.callbackOptions?.callback)
-        globalCallbacks.push(globalOptions.callbackOptions.callback);
+    if (globalOptionsAdd) {
+      if (globalOptionsAdd.callbackOptions?.callback)
+        globalCallbacks.push(globalOptionsAdd.callbackOptions.callback);
 
-      if (globalOptions.options)
-        jsonModifiers.concatJSON([options_, globalOptions.options]);
+      if (globalOptionsAdd.options)
+        jsonModifiers.concatJSON([globalOptions, globalOptionsAdd.options]);
 
-      if (globalOptions.returnAfter) return resolve({} as Response);
+      if (globalOptionsAdd.returnAfter) return resolve({} as Response);
     }
+
+    jsonModifiers.concatJSON([options_, globalOptions]);
 
     if (extendedTypeof(callback) === "function")
       callback_ = callback as RequestCallback;
