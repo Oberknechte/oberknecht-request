@@ -60,6 +60,7 @@ export function request(
           url: url,
           options: options_,
           response: r,
+          error: e,
         });
       });
 

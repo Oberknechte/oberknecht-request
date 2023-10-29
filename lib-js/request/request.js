@@ -49,6 +49,7 @@ function request(url, options, callback, globalCallbackOptions) {
                     url: url,
                     options: options_,
                     response: r,
+                    error: e,
                 });
             });
             w.terminate();
