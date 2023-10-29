@@ -7,9 +7,18 @@ exports.request = void 0;
 const oberknecht_utils_1 = require("oberknecht-utils");
 const worker_threads_1 = require("worker_threads");
 const path_1 = __importDefault(require("path"));
-function request(url, options, callback) {
+let globalCallbacks = [];
+function request(url, options, callback, globalCallbackOptions) {
+    if (globalCallbackOptions) {
+        if (globalCallbackOptions.callback)
+            globalCallbacks.push(globalCallbackOptions.callback);
+        if (globalCallbackOptions.returnAfter)
+            return;
+    }
     return new Promise((resolve, reject) => {
-        if (!(url ?? undefined) && !(options ?? undefined) && !(callback ?? undefined))
+        if (!(url ?? undefined) &&
+            !(options ?? undefined) &&
+            !(callback ?? undefined))
             throw Error("url, options and callback are undefined");
         let url_ = (0, oberknecht_utils_1.recreate)(url);
         let options_ = (0, oberknecht_utils_1.recreate)((0, oberknecht_utils_1.extendedTypeof)(options) !== "json" ? {} : options);
@@ -18,22 +27,37 @@ function request(url, options, callback) {
             callback_ = callback;
         else if ((0, oberknecht_utils_1.extendedTypeof)(options) === "function")
             callback_ = options;
+        globalCallbacks.forEach((globalCallback) => {
+            globalCallback({
+                where: "before",
+                url: url,
+                options: options_,
+            });
+        });
         const w = new worker_threads_1.Worker(path_1.default.resolve(__dirname, "../workers/request.worker"), {
             workerData: {
                 url: url_,
-                options: options_
-            }
+                options: options_,
+            },
         });
         w.on("message", (response_) => {
             let response = JSON.parse(response_);
             let { e, r } = response;
+            globalCallbacks.forEach((globalCallback) => {
+                globalCallback({
+                    where: "after",
+                    url: url,
+                    options: options_,
+                    response: r,
+                });
+            });
+            w.terminate();
+            resolve(r);
             if (callback_)
                 return callback_(e, r, e ?? r);
             if (e)
                 return reject(e);
-            resolve(r);
         });
     });
 }
 exports.request = request;
-;

@@ -1,6 +1,6 @@
 {
   "name": "oberknecht-request",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "main": "./export",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/jubewe/request#readme",
   "dependencies": {
+    "oberknecht-emitters": "^1.0.8",
     "oberknecht-utils": "^1.1.9",
     "request": "^2.88.2"
   },

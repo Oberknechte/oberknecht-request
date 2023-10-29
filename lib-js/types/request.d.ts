@@ -10,3 +10,7 @@ export type requestOptions = {
     body?: string;
     json?: boolean;
 };
+export type globalCallbackOptions = {
+    returnAfter?: boolean;
+    callback: Function;
+};
