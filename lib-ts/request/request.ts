@@ -1,4 +1,9 @@
-import { extendedTypeof, jsonModifiers, recreate } from "oberknecht-utils";
+import {
+  extendedTypeof,
+  jsonModifiers,
+  recreate,
+  sleep,
+} from "oberknecht-utils";
 import {
   globalOptions as globalOptionsType,
   requestOptions,
@@ -8,6 +13,9 @@ import path from "path";
 import { RequestCallback, RequestResponse, Response } from "request";
 let globalCallbacks: Function[] = [];
 let globalOptions = {};
+let requestTimes = [];
+let delayBetweenRequests = 0;
+let requestNum = -1;
 
 export function request(
   url: string,
@@ -15,7 +23,8 @@ export function request(
   callback?: RequestCallback,
   globalOptionsAdd?: globalOptionsType
 ) {
-  return new Promise<RequestResponse>((resolve, reject) => {
+  const myRequestNum = requestNum++;
+  return new Promise<RequestResponse>(async (resolve, reject) => {
     if (
       !(url ?? undefined) &&
       !(options ?? undefined) &&
@@ -24,8 +33,13 @@ export function request(
     )
       throw Error("url, options and callback are undefined");
 
+    requestTimes = requestTimes.slice(0, 50);
+    requestTimes.push(Date.now());
+
     let url_ = recreate(url);
-    let options_ = recreate(extendedTypeof(options) !== "json" ? {} : options);
+    let options_: requestOptions = recreate(
+      extendedTypeof(options) !== "json" ? {} : options
+    );
     let callback_: RequestCallback;
 
     if (globalOptionsAdd) {
@@ -35,10 +49,26 @@ export function request(
       if (globalOptionsAdd.options)
         jsonModifiers.concatJSON([globalOptions, globalOptionsAdd.options]);
 
+      if (globalOptionsAdd.delayBetweenRequests)
+        delayBetweenRequests = globalOptionsAdd.delayBetweenRequests;
+
       if (globalOptionsAdd.returnAfter) return resolve({} as Response);
     }
 
     jsonModifiers.concatJSON([options_, globalOptions]);
+
+    if ((delayBetweenRequests ?? 0) > 0) {
+      if (
+        requestTimes.length > 1 &&
+        Date.now() - requestTimes.at(-2) < delayBetweenRequests
+      )
+        await sleep(
+          delayBetweenRequests *
+            requestTimes
+              .slice(0, -2)
+              .filter((a) => Date.now() - a < delayBetweenRequests).length
+        );
+    }
 
     if (extendedTypeof(callback) === "function")
       callback_ = callback as RequestCallback;

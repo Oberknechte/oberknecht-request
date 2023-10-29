@@ -9,13 +9,19 @@ const worker_threads_1 = require("worker_threads");
 const path_1 = __importDefault(require("path"));
 let globalCallbacks = [];
 let globalOptions = {};
+let requestTimes = [];
+let delayBetweenRequests = 0;
+let requestNum = -1;
 function request(url, options, callback, globalOptionsAdd) {
-    return new Promise((resolve, reject) => {
+    const myRequestNum = requestNum++;
+    return new Promise(async (resolve, reject) => {
         if (!(url ?? undefined) &&
             !(options ?? undefined) &&
             !(callback ?? undefined) &&
             !globalOptionsAdd)
             throw Error("url, options and callback are undefined");
+        requestTimes = requestTimes.slice(0, 50);
+        requestTimes.push(Date.now());
         let url_ = (0, oberknecht_utils_1.recreate)(url);
         let options_ = (0, oberknecht_utils_1.recreate)((0, oberknecht_utils_1.extendedTypeof)(options) !== "json" ? {} : options);
         let callback_;
@@ -24,10 +30,20 @@ function request(url, options, callback, globalOptionsAdd) {
                 globalCallbacks.push(globalOptionsAdd.callbackOptions.callback);
             if (globalOptionsAdd.options)
                 oberknecht_utils_1.jsonModifiers.concatJSON([globalOptions, globalOptionsAdd.options]);
+            if (globalOptionsAdd.delayBetweenRequests)
+                delayBetweenRequests = globalOptionsAdd.delayBetweenRequests;
             if (globalOptionsAdd.returnAfter)
                 return resolve({});
         }
         oberknecht_utils_1.jsonModifiers.concatJSON([options_, globalOptions]);
+        if ((delayBetweenRequests ?? 0) > 0) {
+            if (requestTimes.length > 1 &&
+                Date.now() - requestTimes.at(-2) < delayBetweenRequests)
+                await (0, oberknecht_utils_1.sleep)(delayBetweenRequests *
+                    requestTimes
+                        .slice(0, -2)
+                        .filter((a) => Date.now() - a < delayBetweenRequests).length);
+        }
         if ((0, oberknecht_utils_1.extendedTypeof)(callback) === "function")
             callback_ = callback;
         else if ((0, oberknecht_utils_1.extendedTypeof)(options) === "function")
