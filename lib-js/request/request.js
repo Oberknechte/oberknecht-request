@@ -10,10 +10,10 @@ const path_1 = __importDefault(require("path"));
 let globalCallbacks = [];
 function request(url, options, callback, globalOptions) {
     return new Promise((resolve, reject) => {
-        if ((!(url ?? undefined) &&
+        if (!(url ?? undefined) &&
             !(options ?? undefined) &&
-            !(callback ?? undefined)) ||
-            globalOptions)
+            !(callback ?? undefined) &&
+            !globalOptions)
             throw Error("url, options and callback are undefined");
         let url_ = (0, oberknecht_utils_1.recreate)(url);
         let options_ = (0, oberknecht_utils_1.recreate)((0, oberknecht_utils_1.extendedTypeof)(options) !== "json" ? {} : options);

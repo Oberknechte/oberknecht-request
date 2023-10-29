@@ -13,10 +13,10 @@ export function request(
 ) {
   return new Promise<RequestResponse>((resolve, reject) => {
     if (
-      (!(url ?? undefined) &&
-        !(options ?? undefined) &&
-        !(callback ?? undefined)) ||
-      globalOptions
+      !(url ?? undefined) &&
+      !(options ?? undefined) &&
+      !(callback ?? undefined) &&
+      !globalOptions
     )
       throw Error("url, options and callback are undefined");
 
