@@ -5,8 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.request = void 0;
 const oberknecht_utils_1 = require("oberknecht-utils");
-const worker_threads_1 = require("worker_threads");
-const path_1 = __importDefault(require("path"));
+const axios_1 = __importDefault(require("axios"));
 let globalCallbacks = [];
 let globalOptions = {};
 let requestTimes = [];
@@ -55,31 +54,38 @@ function request(url, options, callback, globalOptionsAdd) {
                 options: options_,
             });
         });
-        const w = new worker_threads_1.Worker(path_1.default.resolve(__dirname, "../workers/request.worker"), {
-            workerData: {
-                url: url_,
-                options: options_,
-            },
+        axios_1.default[options_.method ?? "get"](url, options_)
+            .then((r) => {
+            cb(r);
+        })
+            .catch((e) => {
+            cb(e);
         });
-        w.on("message", (response_) => {
-            let response = JSON.parse(response_);
-            let { e, r } = response;
+        function cb(r) {
+            let e;
+            let rd;
+            if (r instanceof Error) {
+                e = r;
+                r = undefined;
+            }
+            else {
+                rd = r.data;
+            }
             globalCallbacks.forEach((globalCallback) => {
                 globalCallback({
                     where: "after",
                     url: url,
                     options: options_,
-                    response: r,
-                    error: e,
+                    response: rd,
                 });
             });
-            w.terminate();
-            resolve(r);
+            if (rd)
+                resolve(rd);
             if (callback_)
-                return callback_(e, r, e ?? r);
-            if (e)
+                return callback_(e, rd, e ?? rd);
+            if (e && !callback_)
                 return reject(e);
-        });
+        }
     });
 }
 exports.request = request;

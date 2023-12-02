@@ -11,6 +11,7 @@ import {
 import { Worker } from "worker_threads";
 import path from "path";
 import { RequestCallback, RequestResponse, Response } from "request";
+import axios from "axios";
 let globalCallbacks: Function[] = [];
 let globalOptions = {};
 let requestTimes = [];
@@ -83,31 +84,36 @@ export function request(
       });
     });
 
-    const w = new Worker(path.resolve(__dirname, "../workers/request.worker"), {
-      workerData: {
-        url: url_,
-        options: options_,
-      },
-    });
+    axios[options_.method ?? "get"](url, options_)
+      .then((r) => {
+        cb(r);
+      })
+      .catch((e) => {
+        cb(e);
+      });
 
-    w.on("message", (response_) => {
-      let response = JSON.parse(response_);
-      let { e, r } = response;
+    function cb(r) {
+      let e;
+      let rd;
+      if (r instanceof Error) {
+        e = r;
+        r = undefined;
+      } else {
+        rd = r.data;
+      }
 
       globalCallbacks.forEach((globalCallback) => {
         globalCallback({
           where: "after",
           url: url,
           options: options_,
-          response: r,
-          error: e,
+          response: rd,
         });
       });
 
-      w.terminate();
-      resolve(r);
-      if (callback_) return callback_(e, r, e ?? r);
-      if (e) return reject(e);
-    });
+      if (rd) resolve(rd);
+      if (callback_) return callback_(e, rd, e ?? rd);
+      if (e && !callback_) return reject(e);
+    }
   });
 }
