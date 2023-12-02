@@ -4,13 +4,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const worker_threads_1 = require("worker_threads");
-const request_1 = __importDefault(require("request"));
+const axios_1 = __importDefault(require("axios"));
 const { url, options } = worker_threads_1.workerData;
 try {
-    (0, request_1.default)(url, options, (e, r) => {
-        worker_threads_1.parentPort.postMessage(JSON.stringify({ e: e, r: r }));
+    axios_1.default[options.method ?? "get"](url, options)
+        .then((r) => {
+        worker_threads_1.parentPort.postMessage(JSON.stringify({ r: r.data }));
+    })
+        .catch((e) => {
+        worker_threads_1.parentPort.postMessage(JSON.stringify({ e: e }));
     });
 }
 catch (e) {
-    worker_threads_1.parentPort.postMessage(JSON.stringify({ e: Error("Request failed", { cause: e }), r: undefined }));
+    worker_threads_1.parentPort.postMessage(JSON.stringify({ e: Error("Request failed", { cause: e }) }));
 }
