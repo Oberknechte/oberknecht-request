@@ -28,13 +28,16 @@ function request(url, options, callback, globalOptionsAdd) {
             if (globalOptionsAdd.callbackOptions?.callback)
                 globalCallbacks.push(globalOptionsAdd.callbackOptions.callback);
             if (globalOptionsAdd.options)
-                oberknecht_utils_1.jsonModifiers.concatJSON([globalOptions, globalOptionsAdd.options]);
+                globalOptions = oberknecht_utils_1.jsonModifiers.concatJSON([
+                    globalOptions,
+                    globalOptionsAdd.options,
+                ]);
             if (globalOptionsAdd.delayBetweenRequests)
                 delayBetweenRequests = globalOptionsAdd.delayBetweenRequests;
             if (globalOptionsAdd.returnAfter)
                 return resolve({});
         }
-        oberknecht_utils_1.jsonModifiers.concatJSON([options_, globalOptions]);
+        options_ = oberknecht_utils_1.jsonModifiers.concatJSON([options_, globalOptions]);
         if ((delayBetweenRequests ?? 0) > 0) {
             if (requestTimes.length > 1 &&
                 Date.now() - requestTimes.at(-2) < delayBetweenRequests)

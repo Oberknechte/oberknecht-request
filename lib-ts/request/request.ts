@@ -48,7 +48,10 @@ export function request(
         globalCallbacks.push(globalOptionsAdd.callbackOptions.callback);
 
       if (globalOptionsAdd.options)
-        jsonModifiers.concatJSON([globalOptions, globalOptionsAdd.options]);
+        globalOptions = jsonModifiers.concatJSON([
+          globalOptions,
+          globalOptionsAdd.options,
+        ]);
 
       if (globalOptionsAdd.delayBetweenRequests)
         delayBetweenRequests = globalOptionsAdd.delayBetweenRequests;
@@ -56,7 +59,7 @@ export function request(
       if (globalOptionsAdd.returnAfter) return resolve({} as Response);
     }
 
-    jsonModifiers.concatJSON([options_, globalOptions]);
+    options_ = jsonModifiers.concatJSON([options_, globalOptions]);
 
     if ((delayBetweenRequests ?? 0) > 0) {
       if (
