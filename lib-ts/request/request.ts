@@ -60,7 +60,7 @@ export function request(
       if (globalOptionsAdd.returnAfter) return resolve({} as AxiosResponse);
     }
 
-    options_ = jsonModifiers.concatJSON([options_, globalOptions]);
+    options_ = jsonModifiers.concatJSON([options_, globalOptions]) as requestOptions;
 
     if ((delayBetweenRequests ?? 0) > 0) {
       if (

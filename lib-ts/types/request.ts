@@ -1,4 +1,4 @@
-import { AxiosRequestConfig, ResponseType } from "axios";
+import { AxiosDefaults, ResponseType } from "axios";
 
 export const requestMethods = [
   "CONNECT",
@@ -34,9 +34,9 @@ export function requestCallback (
   f: ResponseType | Error
 ) {};
 
-export type requestOptions = AxiosRequestConfig & {
+export type requestOptions = AxiosDefaults & {
   method?: requestMethodType;
-  headers?: defaultHeaderType;
+  // headers?: defaultHeaderType;
   body?: string;
   json?: boolean;
 };
