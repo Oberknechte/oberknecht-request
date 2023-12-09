@@ -1,4 +1,4 @@
-import { CoreOptions, Request, RequestResponse } from "request";
+import { AxiosRequestConfig, ResponseType } from "axios";
 
 export const requestMethods = [
   "CONNECT",
@@ -28,13 +28,13 @@ export type defaultHeaderType = Record<
   string | any
 >;
 
-export const requestCallback = (
+export function requestCallback (
   e: Error,
-  r: RequestResponse,
-  f: RequestResponse | Error
-) => {};
+  r: ResponseType,
+  f: ResponseType | Error
+) {};
 
-export type requestOptions = CoreOptions & {
+export type requestOptions = AxiosRequestConfig & {
   method?: requestMethodType;
   headers?: defaultHeaderType;
   body?: string;

@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.request = void 0;
 const oberknecht_utils_1 = require("oberknecht-utils");
+// import { RequestCallback, RequestResponse, Response } from "request";
 const axios_1 = __importDefault(require("axios"));
 let globalCallbacks = [];
 let globalOptions = {};
@@ -89,6 +90,34 @@ function request(url, options, callback, globalOptionsAdd) {
             if (e && !callback_)
                 return reject(e);
         }
+        /**
+          const w = new Worker(path.resolve(__dirname, "../workers/request.worker"), {
+            workerData: {
+              url: url_,
+              options: options_,
+            },
+          });
+        
+          w.on("message", (response_) => {
+            let response = JSON.parse(response_);
+            let { e, r } = response;
+          
+            globalCallbacks.forEach((globalCallback) => {
+              globalCallback({
+                where: "after",
+                url: url,
+                options: options_,
+                response: r,
+                error: e,
+              });
+            });
+          
+            w.terminate();
+            resolve(r);
+            if (callback_) return callback_(e, r, e ?? r);
+            if (e) return reject(e);
+          });
+         */
     });
 }
 exports.request = request;

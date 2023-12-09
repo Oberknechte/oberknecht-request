@@ -6,12 +6,13 @@ import {
 } from "oberknecht-utils";
 import {
   globalOptions as globalOptionsType,
+  requestCallback,
   requestOptions,
 } from "../types/request";
 import { Worker } from "worker_threads";
 import path from "path";
-import { RequestCallback, RequestResponse, Response } from "request";
-import axios from "axios";
+// import { RequestCallback, RequestResponse, Response } from "request";
+import axios, { ResponseType, AxiosResponse } from "axios";
 let globalCallbacks: Function[] = [];
 let globalOptions = {};
 let requestTimes = [];
@@ -20,12 +21,12 @@ let requestNum = -1;
 
 export function request(
   url: string,
-  options?: requestOptions | RequestCallback,
-  callback?: RequestCallback,
+  options?: requestOptions | typeof requestCallback,
+  callback?: typeof requestCallback,
   globalOptionsAdd?: globalOptionsType
 ) {
   const myRequestNum = requestNum++;
-  return new Promise<RequestResponse>(async (resolve, reject) => {
+  return new Promise<AxiosResponse>(async (resolve, reject) => {
     if (
       !(url ?? undefined) &&
       !(options ?? undefined) &&
@@ -41,7 +42,7 @@ export function request(
     let options_: requestOptions = recreate(
       extendedTypeof(options) !== "json" ? {} : options
     );
-    let callback_: RequestCallback;
+    let callback_: typeof requestCallback;
 
     if (globalOptionsAdd) {
       if (globalOptionsAdd.callbackOptions?.callback)
@@ -56,7 +57,7 @@ export function request(
       if (globalOptionsAdd.delayBetweenRequests)
         delayBetweenRequests = globalOptionsAdd.delayBetweenRequests;
 
-      if (globalOptionsAdd.returnAfter) return resolve({} as Response);
+      if (globalOptionsAdd.returnAfter) return resolve({} as AxiosResponse);
     }
 
     options_ = jsonModifiers.concatJSON([options_, globalOptions]);
@@ -75,9 +76,9 @@ export function request(
     }
 
     if (extendedTypeof(callback) === "function")
-      callback_ = callback as RequestCallback;
+      callback_ = callback as typeof requestCallback;
     else if (extendedTypeof(options) === "function")
-      callback_ = options as RequestCallback;
+      callback_ = options as typeof requestCallback;
 
     globalCallbacks.forEach((globalCallback) => {
       globalCallback({
@@ -118,5 +119,34 @@ export function request(
       if (callback_) return callback_(e, rd, e ?? rd);
       if (e && !callback_) return reject(e);
     }
+
+    /**
+      const w = new Worker(path.resolve(__dirname, "../workers/request.worker"), {
+        workerData: {
+          url: url_,
+          options: options_,
+        },
+      });
+    
+      w.on("message", (response_) => {
+        let response = JSON.parse(response_);
+        let { e, r } = response;
+      
+        globalCallbacks.forEach((globalCallback) => {
+          globalCallback({
+            where: "after",
+            url: url,
+            options: options_,
+            response: r,
+            error: e,
+          });
+        });
+      
+        w.terminate();
+        resolve(r);
+        if (callback_) return callback_(e, r, e ?? r);
+        if (e) return reject(e);
+      });
+     */
   });
 }

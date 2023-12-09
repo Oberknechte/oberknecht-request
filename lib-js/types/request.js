@@ -22,5 +22,6 @@ exports.defaultHeaders = [
     "Content-Encoding",
     "Content-Language",
 ];
-const requestCallback = (e, r, f) => { };
+function requestCallback(e, r, f) { }
 exports.requestCallback = requestCallback;
+;
