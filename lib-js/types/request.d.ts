@@ -1,15 +1,15 @@
 import { AxiosDefaults, ResponseType } from "axios";
 export declare const requestMethods: readonly ["CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "TRACE"];
-export declare type requestMethodType = typeof requestMethods[number];
+export type requestMethodType = typeof requestMethods[number];
 export declare const defaultHeaders: readonly ["Authorization", "Auth", "Accept", "Accept-Encoding", "Accept-Language", "Content-Type", "Content-Encoding", "Content-Language"];
-export declare type defaultHeaderType = Record<typeof defaultHeaders[number], string | any>;
+export type defaultHeaderType = Record<typeof defaultHeaders[number], string | any>;
 export declare function requestCallback(e: Error, r: ResponseType, f: ResponseType | Error): void;
-export declare type requestOptions = AxiosDefaults & {
+export type requestOptions = AxiosDefaults & {
     method?: requestMethodType;
     body?: string;
     json?: boolean;
 };
-export declare type globalOptions = {
+export type globalOptions = {
     callbackOptions?: {
         callback: Function;
     };
