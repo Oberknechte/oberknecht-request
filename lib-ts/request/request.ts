@@ -14,9 +14,9 @@ import path from "path";
 // import { RequestCallback, RequestResponse, Response } from "request";
 import axios, { ResponseType, AxiosResponse } from "axios";
 let globalCallbacks: Function[] = [];
-let globalOptions: globalOptionsType = {};
+// @ts-ignore
+let globalOptions: globalOptionsType = { options: {} };
 let requestTimes = [];
-let delayBetweenRequests = 0;
 let requestNum = -1;
 
 export function request(
@@ -49,32 +49,39 @@ export function request(
         globalCallbacks.push(globalOptionsAdd.callbackOptions.callback);
 
       if (globalOptionsAdd.options)
-        globalOptions = jsonModifiers.concatJSON([
-          globalOptions,
+        globalOptions.options = jsonModifiers.concatJSON([
+          globalOptions.options,
           globalOptionsAdd.options,
-        ]);
+        ]) as requestOptions;
 
-      if (globalOptionsAdd.delayBetweenRequests)
-        delayBetweenRequests = globalOptionsAdd.delayBetweenRequests;
+      Object.keys(globalOptionsAdd)
+        .filter((a) =>
+          ["delayBetweenRequests", "returnOriginalResponse"].includes(a)
+        )
+        .forEach((a) => {
+          globalOptions[a] = globalOptionsAdd[a];
+        });
 
       if (globalOptionsAdd.returnAfter) return resolve({} as AxiosResponse);
     }
 
     options_ = jsonModifiers.concatJSON([
       options_,
-      globalOptions,
+      globalOptions.options,
     ]) as requestOptions;
 
-    if ((delayBetweenRequests ?? 0) > 0) {
+    if ((globalOptions.delayBetweenRequests ?? 0) > 0) {
       if (
         requestTimes.length > 1 &&
-        Date.now() - requestTimes.at(-2) < delayBetweenRequests
+        Date.now() - requestTimes.at(-2) < globalOptions.delayBetweenRequests
       )
         await sleep(
-          delayBetweenRequests *
+          globalOptions.delayBetweenRequests *
             requestTimes
               .slice(0, -2)
-              .filter((a) => Date.now() - a < delayBetweenRequests).length
+              .filter(
+                (a) => Date.now() - a < globalOptions.delayBetweenRequests
+              ).length
         );
     }
 
@@ -91,10 +98,11 @@ export function request(
       });
     });
 
-    axios[axios?.[options_?.method?.toLowerCase?.()] ? options_.method.toLowerCase() : "get"](
-      url,
-      options_
-    )
+    axios[
+      axios?.[options_?.method?.toLowerCase?.()]
+        ? options_.method.toLowerCase()
+        : "get"
+    ](url, options_)
       .then((r) => {
         cb(r);
       })

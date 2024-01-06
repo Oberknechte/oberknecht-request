@@ -8,9 +8,9 @@ const oberknecht_utils_1 = require("oberknecht-utils");
 // import { RequestCallback, RequestResponse, Response } from "request";
 const axios_1 = __importDefault(require("axios"));
 let globalCallbacks = [];
-let globalOptions = {};
+// @ts-ignore
+let globalOptions = { options: {} };
 let requestTimes = [];
-let delayBetweenRequests = 0;
 let requestNum = -1;
 function request(url, options, callback, globalOptionsAdd) {
     const myRequestNum = requestNum++;
@@ -29,26 +29,29 @@ function request(url, options, callback, globalOptionsAdd) {
             if (globalOptionsAdd.callbackOptions?.callback)
                 globalCallbacks.push(globalOptionsAdd.callbackOptions.callback);
             if (globalOptionsAdd.options)
-                globalOptions = oberknecht_utils_1.jsonModifiers.concatJSON([
-                    globalOptions,
+                globalOptions.options = oberknecht_utils_1.jsonModifiers.concatJSON([
+                    globalOptions.options,
                     globalOptionsAdd.options,
                 ]);
-            if (globalOptionsAdd.delayBetweenRequests)
-                delayBetweenRequests = globalOptionsAdd.delayBetweenRequests;
+            Object.keys(globalOptionsAdd)
+                .filter((a) => ["delayBetweenRequests", "returnOriginalResponse"].includes(a))
+                .forEach((a) => {
+                globalOptions[a] = globalOptionsAdd[a];
+            });
             if (globalOptionsAdd.returnAfter)
                 return resolve({});
         }
         options_ = oberknecht_utils_1.jsonModifiers.concatJSON([
             options_,
-            globalOptions,
+            globalOptions.options,
         ]);
-        if ((delayBetweenRequests ?? 0) > 0) {
+        if ((globalOptions.delayBetweenRequests ?? 0) > 0) {
             if (requestTimes.length > 1 &&
-                Date.now() - requestTimes.at(-2) < delayBetweenRequests)
-                await (0, oberknecht_utils_1.sleep)(delayBetweenRequests *
+                Date.now() - requestTimes.at(-2) < globalOptions.delayBetweenRequests)
+                await (0, oberknecht_utils_1.sleep)(globalOptions.delayBetweenRequests *
                     requestTimes
                         .slice(0, -2)
-                        .filter((a) => Date.now() - a < delayBetweenRequests).length);
+                        .filter((a) => Date.now() - a < globalOptions.delayBetweenRequests).length);
         }
         if ((0, oberknecht_utils_1.extendedTypeof)(callback) === "function")
             callback_ = callback;
@@ -61,7 +64,9 @@ function request(url, options, callback, globalOptionsAdd) {
                 options: options_,
             });
         });
-        axios_1.default[axios_1.default?.[options_?.method?.toLowerCase?.()] ? options_.method.toLowerCase() : "get"](url, options_)
+        axios_1.default[axios_1.default?.[options_?.method?.toLowerCase?.()]
+            ? options_.method.toLowerCase()
+            : "get"](url, options_)
             .then((r) => {
             cb(r);
         })
