@@ -7,6 +7,7 @@ const worker_threads_1 = require("worker_threads");
 const axios_1 = __importDefault(require("axios"));
 const { url, options } = worker_threads_1.workerData;
 try {
+    axios_1.default.post;
     axios_1.default[options.method?.toLowerCase?.() ?? "get"](url, options)
         .then((r) => {
         worker_threads_1.parentPort.postMessage(JSON.stringify({ r: r.data }));

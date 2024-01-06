@@ -3,6 +3,7 @@ import axios from "axios";
 
 const { url, options } = workerData;
 try {
+  axios.post
   axios[options.method?.toLowerCase?.() ?? "get"](url, options)
     .then((r) => {
       parentPort.postMessage(JSON.stringify({ r: r.data }));

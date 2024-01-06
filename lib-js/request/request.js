@@ -38,7 +38,10 @@ function request(url, options, callback, globalOptionsAdd) {
             if (globalOptionsAdd.returnAfter)
                 return resolve({});
         }
-        options_ = oberknecht_utils_1.jsonModifiers.concatJSON([options_, globalOptions]);
+        options_ = oberknecht_utils_1.jsonModifiers.concatJSON([
+            options_,
+            globalOptions,
+        ]);
         if ((delayBetweenRequests ?? 0) > 0) {
             if (requestTimes.length > 1 &&
                 Date.now() - requestTimes.at(-2) < delayBetweenRequests)
@@ -58,7 +61,7 @@ function request(url, options, callback, globalOptionsAdd) {
                 options: options_,
             });
         });
-        axios_1.default[options_.method ?? "get"](url, options_)
+        axios_1.default[axios_1.default?.[options_?.method]?.toLowerCase?.() ? options_.method : "get"](url, options_)
             .then((r) => {
             cb(r);
         })
