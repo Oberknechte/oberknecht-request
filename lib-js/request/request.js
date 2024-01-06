@@ -61,7 +61,7 @@ function request(url, options, callback, globalOptionsAdd) {
                 options: options_,
             });
         });
-        axios_1.default[axios_1.default?.[options_?.method]?.toLowerCase?.() ? options_.method : "get"](url, options_)
+        axios_1.default[axios_1.default?.[options_?.method?.toLowerCase?.()] ? options_.method.toLowerCase() : "get"](url, options_)
             .then((r) => {
             cb(r);
         })
@@ -76,7 +76,7 @@ function request(url, options, callback, globalOptionsAdd) {
                 r = undefined;
             }
             else {
-                rd = r.data;
+                rd = globalOptions.returnOriginalResponse ? r : r.data;
             }
             globalCallbacks.forEach((globalCallback) => {
                 globalCallback({

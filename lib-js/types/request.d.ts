@@ -16,4 +16,5 @@ export type globalOptions = {
     returnAfter?: boolean;
     options?: requestOptions;
     delayBetweenRequests?: number;
+    returnOriginalResponse?: boolean;
 };

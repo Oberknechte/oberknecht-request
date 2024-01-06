@@ -28,11 +28,11 @@ export type defaultHeaderType = Record<
   string | any
 >;
 
-export function requestCallback (
+export function requestCallback(
   e: Error,
   r: ResponseType,
   f: ResponseType | Error
-) {};
+) {}
 
 export type requestOptions = AxiosDefaults & {
   method?: requestMethodType;
@@ -48,4 +48,5 @@ export type globalOptions = {
   returnAfter?: boolean;
   options?: requestOptions;
   delayBetweenRequests?: number;
+  returnOriginalResponse?: boolean;
 };

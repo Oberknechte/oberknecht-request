@@ -14,7 +14,7 @@ import path from "path";
 // import { RequestCallback, RequestResponse, Response } from "request";
 import axios, { ResponseType, AxiosResponse } from "axios";
 let globalCallbacks: Function[] = [];
-let globalOptions = {};
+let globalOptions: globalOptionsType = {};
 let requestTimes = [];
 let delayBetweenRequests = 0;
 let requestNum = -1;
@@ -91,7 +91,10 @@ export function request(
       });
     });
 
-    axios[axios?.[options_?.method]?.toLowerCase?.() ? options_.method : "get"](url, options_)
+    axios[axios?.[options_?.method?.toLowerCase?.()] ? options_.method.toLowerCase() : "get"](
+      url,
+      options_
+    )
       .then((r) => {
         cb(r);
       })
@@ -106,7 +109,7 @@ export function request(
         e = r;
         r = undefined;
       } else {
-        rd = r.data;
+        rd = globalOptions.returnOriginalResponse ? r : r.data;
       }
 
       globalCallbacks.forEach((globalCallback) => {

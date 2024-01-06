@@ -24,4 +24,3 @@ exports.defaultHeaders = [
 ];
 function requestCallback(e, r, f) { }
 exports.requestCallback = requestCallback;
-;
