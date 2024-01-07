@@ -98,11 +98,28 @@ export function request(
       });
     });
 
-    axios[
-      axios?.[options_?.method?.toLowerCase?.()]
-        ? options_.method.toLowerCase()
-        : "get"
-    ](url, options_)
+    let method = axios?.[options_?.method?.toLowerCase?.()]
+      ? options_.method.toLowerCase()
+      : "get";
+
+    let axiosFuncArgs;
+
+    switch (method) {
+      case "patch":
+      case "put":
+      case "post": {
+        let body = options_.body;
+        if (body) delete options_.body;
+        axiosFuncArgs = [url, body, options_];
+        break;
+      }
+
+      default: {
+        axiosFuncArgs = [url, options_];
+      }
+    }
+
+    axios[method](...axiosFuncArgs)
       .then((r) => {
         cb(r);
       })

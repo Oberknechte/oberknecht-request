@@ -64,9 +64,25 @@ function request(url, options, callback, globalOptionsAdd) {
                 options: options_,
             });
         });
-        axios_1.default[axios_1.default?.[options_?.method?.toLowerCase?.()]
+        let method = axios_1.default?.[options_?.method?.toLowerCase?.()]
             ? options_.method.toLowerCase()
-            : "get"](url, options_)
+            : "get";
+        let axiosFuncArgs;
+        switch (method) {
+            case "patch":
+            case "put":
+            case "post": {
+                let body = options_.body;
+                if (body)
+                    delete options_.body;
+                axiosFuncArgs = [url, body, options_];
+                break;
+            }
+            default: {
+                axiosFuncArgs = [url, options_];
+            }
+        }
+        axios_1.default[method](...axiosFuncArgs)
             .then((r) => {
             cb(r);
         })
