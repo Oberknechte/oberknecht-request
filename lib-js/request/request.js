@@ -103,7 +103,6 @@ function request(url, options, callback, globalOptionsAdd) {
             w.on("message", (response_) => {
                 let response = JSON.parse(response_);
                 let { e, r } = response;
-                console.log("cb", r, e);
                 cb(r ?? e);
                 w.terminate();
             });

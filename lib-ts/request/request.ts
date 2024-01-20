@@ -8,10 +8,11 @@ import {
   globalOptions as globalOptionsType,
   requestCallback,
   requestOptions,
+  requestResponse,
 } from "../types/request";
 import { Worker } from "worker_threads";
 import path from "path";
-import axios, { ResponseType, AxiosResponse } from "axios";
+import axios, { } from "axios";
 let globalCallbacks: Function[] = [];
 // @ts-ignore
 let globalOptions: globalOptionsType = { options: {} };
@@ -25,7 +26,7 @@ export function request(
   globalOptionsAdd?: globalOptionsType
 ) {
   const myRequestNum = requestNum++;
-  return new Promise<AxiosResponse>(async (resolve, reject) => {
+  return new Promise<requestResponse>(async (resolve, reject) => {
     if (
       !(url ?? undefined) &&
       !(options ?? undefined) &&
@@ -61,7 +62,7 @@ export function request(
           globalOptions[a] = globalOptionsAdd[a];
         });
 
-      if (globalOptionsAdd.returnAfter) return resolve({} as AxiosResponse);
+      if (globalOptionsAdd.returnAfter) return resolve({} as requestResponse);
     }
 
     options_ = jsonModifiers.concatJSON([
@@ -141,8 +142,6 @@ export function request(
       w.on("message", (response_) => {
         let response = JSON.parse(response_);
         let { e, r } = response;
-
-        console.log("cb", r, e);
 
         cb(r ?? e);
 

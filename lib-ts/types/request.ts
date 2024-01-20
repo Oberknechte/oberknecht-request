@@ -1,4 +1,10 @@
-import { AxiosDefaults, ResponseType } from "axios";
+import {
+  AxiosHeaders,
+  AxiosRequestConfig,
+  HeadersDefaults,
+  RawAxiosRequestHeaders,
+} from "axios";
+import { AxiosDefaults, AxiosResponse, ResponseType } from "axios";
 
 export const requestMethods = [
   "CONNECT",
@@ -28,18 +34,19 @@ export type defaultHeaderType = Record<
   string | any
 >;
 
+export type requestResponse = Record<string, any> | AxiosResponse;
+
 export function requestCallback(
   e: Error,
-  r: ResponseType,
-  f: ResponseType | Error
+  r: requestResponse,
+  f: requestResponse | Error
 ) {}
 
-export type requestOptions = AxiosDefaults & {
+export type requestOptions = {
   method?: requestMethodType;
-  // headers?: defaultHeaderType;
+  headers?: defaultHeaderType | Record<string, any> | RawAxiosRequestHeaders;
   body?: string;
-  json?: boolean;
-};
+} & AxiosRequestConfig;
 
 export type globalOptions = {
   callbackOptions?: {
