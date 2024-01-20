@@ -5,7 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.request = void 0;
 const oberknecht_utils_1 = require("oberknecht-utils");
-// import { RequestCallback, RequestResponse, Response } from "request";
+const worker_threads_1 = require("worker_threads");
+const path_1 = __importDefault(require("path"));
 const axios_1 = __importDefault(require("axios"));
 let globalCallbacks = [];
 // @ts-ignore
@@ -82,13 +83,31 @@ function request(url, options, callback, globalOptionsAdd) {
                 axiosFuncArgs = [url, options_];
             }
         }
-        axios_1.default[method](...axiosFuncArgs)
-            .then((r) => {
-            cb(r);
-        })
-            .catch((e) => {
-            cb(e);
-        });
+        if (globalOptions.noWorker) {
+            axios_1.default[method](...axiosFuncArgs)
+                .then((r) => {
+                cb(r);
+            })
+                .catch((e) => {
+                cb(e);
+            });
+        }
+        else {
+            const w = new worker_threads_1.Worker(path_1.default.resolve(__dirname, "../workers/request.worker"), {
+                workerData: {
+                    url: url_,
+                    method: method,
+                    funcArgs: axiosFuncArgs,
+                },
+            });
+            w.on("message", (response_) => {
+                let response = JSON.parse(response_);
+                let { e, r } = response;
+                console.log("cb", r, e);
+                cb(r ?? e);
+                w.terminate();
+            });
+        }
         function cb(r) {
             let e;
             let rd;
@@ -114,34 +133,6 @@ function request(url, options, callback, globalOptionsAdd) {
             if (e && !callback_)
                 return reject(e);
         }
-        /**
-          const w = new Worker(path.resolve(__dirname, "../workers/request.worker"), {
-            workerData: {
-              url: url_,
-              options: options_,
-            },
-          });
-        
-          w.on("message", (response_) => {
-            let response = JSON.parse(response_);
-            let { e, r } = response;
-          
-            globalCallbacks.forEach((globalCallback) => {
-              globalCallback({
-                where: "after",
-                url: url,
-                options: options_,
-                response: r,
-                error: e,
-              });
-            });
-          
-            w.terminate();
-            resolve(r);
-            if (callback_) return callback_(e, r, e ?? r);
-            if (e) return reject(e);
-          });
-         */
     });
 }
 exports.request = request;

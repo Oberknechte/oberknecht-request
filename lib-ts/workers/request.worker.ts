@@ -1,10 +1,9 @@
 import { parentPort, workerData } from "worker_threads";
 import axios from "axios";
 
-const { url, options } = workerData;
+const { url, options, method, funcArgs } = workerData;
 try {
-  axios.post
-  axios[options.method?.toLowerCase?.() ?? "get"](url, options)
+  axios[method](...funcArgs)
     .then((r) => {
       parentPort.postMessage(JSON.stringify({ r: r.data }));
     })

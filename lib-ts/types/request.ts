@@ -49,4 +49,5 @@ export type globalOptions = {
   options?: requestOptions;
   delayBetweenRequests?: number;
   returnOriginalResponse?: boolean;
+  noWorker?: boolean;
 };

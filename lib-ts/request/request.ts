@@ -11,7 +11,6 @@ import {
 } from "../types/request";
 import { Worker } from "worker_threads";
 import path from "path";
-// import { RequestCallback, RequestResponse, Response } from "request";
 import axios, { ResponseType, AxiosResponse } from "axios";
 let globalCallbacks: Function[] = [];
 // @ts-ignore
@@ -119,13 +118,37 @@ export function request(
       }
     }
 
-    axios[method](...axiosFuncArgs)
-      .then((r) => {
-        cb(r);
-      })
-      .catch((e) => {
-        cb(e);
+    if (globalOptions.noWorker) {
+      axios[method](...axiosFuncArgs)
+        .then((r) => {
+          cb(r);
+        })
+        .catch((e) => {
+          cb(e);
+        });
+    } else {
+      const w = new Worker(
+        path.resolve(__dirname, "../workers/request.worker"),
+        {
+          workerData: {
+            url: url_,
+            method: method,
+            funcArgs: axiosFuncArgs,
+          },
+        }
+      );
+
+      w.on("message", (response_) => {
+        let response = JSON.parse(response_);
+        let { e, r } = response;
+
+        console.log("cb", r, e);
+
+        cb(r ?? e);
+
+        w.terminate();
       });
+    }
 
     function cb(r) {
       let e;
@@ -150,34 +173,5 @@ export function request(
       if (callback_) return callback_(e, rd, e ?? rd);
       if (e && !callback_) return reject(e);
     }
-
-    /**
-      const w = new Worker(path.resolve(__dirname, "../workers/request.worker"), {
-        workerData: {
-          url: url_,
-          options: options_,
-        },
-      });
-    
-      w.on("message", (response_) => {
-        let response = JSON.parse(response_);
-        let { e, r } = response;
-      
-        globalCallbacks.forEach((globalCallback) => {
-          globalCallback({
-            where: "after",
-            url: url,
-            options: options_,
-            response: r,
-            error: e,
-          });
-        });
-      
-        w.terminate();
-        resolve(r);
-        if (callback_) return callback_(e, r, e ?? r);
-        if (e) return reject(e);
-      });
-     */
   });
 }
