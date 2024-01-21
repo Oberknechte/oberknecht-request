@@ -12,7 +12,7 @@ import {
 } from "../types/request";
 import { Worker } from "worker_threads";
 import path from "path";
-import axios, { } from "axios";
+import axios from "axios";
 let globalCallbacks: Function[] = [];
 // @ts-ignore
 let globalOptions: globalOptionsType = { options: {} };
@@ -152,7 +152,7 @@ export function request(
     function cb(r) {
       let e;
       let rd;
-      if (r instanceof Error) {
+      if (r instanceof Error || r.stack) {
         e = r;
         r = undefined;
       } else {

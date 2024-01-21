@@ -1,4 +1,5 @@
 import {
+  AxiosError,
   AxiosHeaders,
   AxiosRequestConfig,
   HeadersDefaults,
@@ -36,10 +37,12 @@ export type defaultHeaderType = Record<
 
 export type requestResponse = Record<string, any> | AxiosResponse;
 
+export type requestErrorResponse = AxiosError;
+
 export function requestCallback(
-  e: Error,
+  e: requestErrorResponse,
   r: requestResponse,
-  f: requestResponse | Error
+  f: requestResponse | requestErrorResponse
 ) {}
 
 export type requestOptions = {

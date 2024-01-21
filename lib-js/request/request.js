@@ -110,7 +110,7 @@ function request(url, options, callback, globalOptionsAdd) {
         function cb(r) {
             let e;
             let rd;
-            if (r instanceof Error) {
+            if (r instanceof Error || r.stack) {
                 e = r;
                 r = undefined;
             }
