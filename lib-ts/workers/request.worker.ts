@@ -16,14 +16,15 @@ parentPort.on("message", (r) => {
           "statusText",
         ]);
 
-        parentPort.postMessage(JSON.stringify({ id: id, r: r_ }));
+        parentPort.postMessage({ id: id, r: r_ });
       })
       .catch((e) => {
-        parentPort.postMessage(JSON.stringify({ id: id, e: e }));
+        parentPort.postMessage({ id: id, e: e });
       });
   } catch (e) {
-    parentPort.postMessage(
-      JSON.stringify({ id: id, e: Error("Request failed", { cause: e }) })
-    );
+    parentPort.postMessage({
+      id: id,
+      e: Error("Request failed", { cause: e }),
+    });
   }
 });
