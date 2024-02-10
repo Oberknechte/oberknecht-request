@@ -1,4 +1,5 @@
 import {
+  createID,
   extendedTypeof,
   jsonModifiers,
   recreate,
@@ -10,7 +11,7 @@ import {
   requestOptions,
   requestResponse,
 } from "../types/request";
-import { Worker } from "worker_threads";
+import { Worker, workerData } from "worker_threads";
 import path from "path";
 import axios from "axios";
 let globalCallbacks: Function[] = [];
@@ -18,6 +19,18 @@ let globalCallbacks: Function[] = [];
 let globalOptions: globalOptionsType = { options: {} };
 let requestTimes = [];
 let requestNum = -1;
+type workerDatType = {
+  worker: Worker;
+  ids: Record<string, {}>;
+  callback: Function;
+};
+let workers: Record<string, workerDatType> = {};
+// {worker: <Worker>, num: <number>, callback: <Function>}[]
+
+let callbacks: Record<string, Function> = {};
+let num = 0;
+let workerNum = 0;
+let closeCheckIntervals = {};
 
 export function request(
   url: string,
@@ -55,9 +68,9 @@ export function request(
         ]) as requestOptions;
 
       Object.keys(globalOptionsAdd)
-        .filter((a) =>
-          ["delayBetweenRequests", "returnOriginalResponse"].includes(a)
-        )
+        // .filter((a) =>
+        //   ["delayBetweenRequests", "returnOriginalResponse"].includes(a)
+        // )
         .forEach((a) => {
           globalOptions[a] = globalOptionsAdd[a];
         });
@@ -128,25 +141,48 @@ export function request(
           cb(e);
         });
     } else {
-      const w = new Worker(
-        path.resolve(__dirname, "../workers/request.worker"),
-        {
-          workerData: {
-            url: url_,
-            method: method,
-            funcArgs: axiosFuncArgs,
+      const id = (num++).toString();
+
+      let workerID = Object.keys(workers).filter(
+        (a) =>
+          Object.keys(workers[a].ids ?? {}).length <=
+          (globalOptions.maxRequestsPerWorker ?? 100)
+      )[0];
+
+      let workerDat = workers?.[workerID];
+
+      if (!workerID) {
+        workerID = (workerNum++).toString();
+        workerDat = workers[workerID] = {
+          worker: new Worker(
+            path.resolve(__dirname, "../workers/request.worker"),
+            {}
+          ),
+          ids: {},
+          callback: (response_) => {
+            let response = JSON.parse(response_);
+            let { e, r } = response;
+
+            if (workerDat.ids[response.id]) delete workerDat.ids[response.id];
+            if (callbacks[response.id])
+              callbacks[response.id]?.(r ?? e), delete callbacks[response.id];
+
+            if (!closeCheckIntervals[workerID])
+              closeCheckIntervals[workerID] = setInterval(() => {
+                checkCloseWorker(workerDat, workerID);
+              }, globalOptions.checkCloseWorkerInterval ?? 3000);
           },
-        }
-      );
+        };
 
-      w.on("message", (response_) => {
-        let response = JSON.parse(response_);
-        let { e, r } = response;
+        workerDat.worker.on("message", (a) => {
+          workerDat.callback(a);
+        });
+      }
 
-        cb(r ?? e);
+      workerDat.ids[id] = {};
+      callbacks[id] = cb;
 
-        w.terminate();
-      });
+      sendWait(workerDat, id, url_, method, axiosFuncArgs);
     }
 
     function cb(r) {
@@ -173,4 +209,30 @@ export function request(
       if (e && !callback_) return reject(e);
     }
   });
+}
+
+function sendWait(workerDat: workerDatType, id, url, method, funcArgs) {
+  workerDat.worker.postMessage(
+    JSON.stringify({
+      id: id,
+      url: url,
+      method: method,
+      funcArgs: funcArgs,
+    })
+  );
+}
+
+function checkCloseWorker(workerDat: workerDatType, workerID) {
+  if (
+    Object.keys(workerDat.ids).length === 0 &&
+    Object.keys(workers).length > (globalOptions.keepWorkerActiveNum ?? 0)
+  ) {
+    workerDat.worker
+      .terminate()
+      .finally(() => {
+        clearInterval(closeCheckIntervals[workerID]);
+        delete workers[workerID];
+      })
+      .catch(() => {});
+  }
 }

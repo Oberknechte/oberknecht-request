@@ -13,6 +13,12 @@ let globalCallbacks = [];
 let globalOptions = { options: {} };
 let requestTimes = [];
 let requestNum = -1;
+let workers = {};
+// {worker: <Worker>, num: <number>, callback: <Function>}[]
+let callbacks = {};
+let num = 0;
+let workerNum = 0;
+let closeCheckIntervals = {};
 function request(url, options, callback, globalOptionsAdd) {
     const myRequestNum = requestNum++;
     return new Promise(async (resolve, reject) => {
@@ -35,7 +41,9 @@ function request(url, options, callback, globalOptionsAdd) {
                     globalOptionsAdd.options,
                 ]);
             Object.keys(globalOptionsAdd)
-                .filter((a) => ["delayBetweenRequests", "returnOriginalResponse"].includes(a))
+                // .filter((a) =>
+                //   ["delayBetweenRequests", "returnOriginalResponse"].includes(a)
+                // )
                 .forEach((a) => {
                 globalOptions[a] = globalOptionsAdd[a];
             });
@@ -93,19 +101,35 @@ function request(url, options, callback, globalOptionsAdd) {
             });
         }
         else {
-            const w = new worker_threads_1.Worker(path_1.default.resolve(__dirname, "../workers/request.worker"), {
-                workerData: {
-                    url: url_,
-                    method: method,
-                    funcArgs: axiosFuncArgs,
-                },
-            });
-            w.on("message", (response_) => {
-                let response = JSON.parse(response_);
-                let { e, r } = response;
-                cb(r ?? e);
-                w.terminate();
-            });
+            const id = (num++).toString();
+            let workerID = Object.keys(workers).filter((a) => Object.keys(workers[a].ids ?? {}).length <=
+                (globalOptions.maxRequestsPerWorker ?? 100))[0];
+            let workerDat = workers?.[workerID];
+            if (!workerID) {
+                workerID = (workerNum++).toString();
+                workerDat = workers[workerID] = {
+                    worker: new worker_threads_1.Worker(path_1.default.resolve(__dirname, "../workers/request.worker"), {}),
+                    ids: {},
+                    callback: (response_) => {
+                        let response = JSON.parse(response_);
+                        let { e, r } = response;
+                        if (workerDat.ids[response.id])
+                            delete workerDat.ids[response.id];
+                        if (callbacks[response.id])
+                            callbacks[response.id]?.(r ?? e), delete callbacks[response.id];
+                        if (!closeCheckIntervals[workerID])
+                            closeCheckIntervals[workerID] = setInterval(() => {
+                                checkCloseWorker(workerDat, workerID);
+                            }, globalOptions.checkCloseWorkerInterval ?? 3000);
+                    },
+                };
+                workerDat.worker.on("message", (a) => {
+                    workerDat.callback(a);
+                });
+            }
+            workerDat.ids[id] = {};
+            callbacks[id] = cb;
+            sendWait(workerDat, id, url_, method, axiosFuncArgs);
         }
         function cb(r) {
             let e;
@@ -135,3 +159,23 @@ function request(url, options, callback, globalOptionsAdd) {
     });
 }
 exports.request = request;
+function sendWait(workerDat, id, url, method, funcArgs) {
+    workerDat.worker.postMessage(JSON.stringify({
+        id: id,
+        url: url,
+        method: method,
+        funcArgs: funcArgs,
+    }));
+}
+function checkCloseWorker(workerDat, workerID) {
+    if (Object.keys(workerDat.ids).length === 0 &&
+        Object.keys(workers).length > (globalOptions.keepWorkerActiveNum ?? 0)) {
+        workerDat.worker
+            .terminate()
+            .finally(() => {
+            clearInterval(closeCheckIntervals[workerID]);
+            delete workers[workerID];
+        })
+            .catch(() => { });
+    }
+}

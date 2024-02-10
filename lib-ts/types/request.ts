@@ -60,4 +60,7 @@ export type globalOptions = {
   delayBetweenRequests?: number;
   returnOriginalResponse?: boolean;
   noWorker?: boolean;
+  maxRequestsPerWorker?: number;
+  checkCloseWorkerInterval?: number;
+  keepWorkerActiveNum?: number;
 };
