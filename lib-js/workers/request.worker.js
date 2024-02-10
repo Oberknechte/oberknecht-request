@@ -7,7 +7,7 @@ const worker_threads_1 = require("worker_threads");
 const axios_1 = __importDefault(require("axios"));
 const oberknecht_utils_1 = require("oberknecht-utils");
 worker_threads_1.parentPort.on("message", (r) => {
-    let requestData = JSON.parse(r);
+    let requestData = r;
     const { method, funcArgs, id } = requestData;
     try {
         axios_1.default[method](...funcArgs)

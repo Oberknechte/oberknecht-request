@@ -3,7 +3,7 @@ import axios from "axios";
 import { filterByKeys } from "oberknecht-utils";
 
 parentPort.on("message", (r) => {
-  let requestData = JSON.parse(r);
+  let requestData = r;
   const { method, funcArgs, id } = requestData;
   try {
     axios[method](...funcArgs)
