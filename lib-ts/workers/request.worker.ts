@@ -3,7 +3,7 @@ import axios from "axios";
 import { filterByKeys } from "oberknecht-utils";
 
 parentPort.on("message", (r) => {
-  let requestData = r;
+  let requestData = JSON.parse(r);
   const { method, funcArgs, id } = requestData;
   try {
     axios[method](...funcArgs)
@@ -16,15 +16,14 @@ parentPort.on("message", (r) => {
           "statusText",
         ]);
 
-        parentPort.postMessage({ id: id, r: r_ });
+        parentPort.postMessage(JSON.stringify({ id: id, r: r_ }));
       })
       .catch((e) => {
-        parentPort.postMessage({ id: id, e: e });
+        parentPort.postMessage(JSON.stringify({ id: id, e: e }));
       });
   } catch (e) {
-    parentPort.postMessage({
-      id: id,
-      e: Error("Request failed", { cause: e }),
-    });
+    parentPort.postMessage(
+      JSON.stringify({ id: id, e: Error("Request failed", { cause: e }) })
+    );
   }
 });

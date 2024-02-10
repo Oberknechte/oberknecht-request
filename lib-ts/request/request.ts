@@ -160,7 +160,7 @@ export function request(
           ),
           ids: {},
           callback: (response_) => {
-            let response = response_;
+            let response = JSON.parse(response_);
             let { e, r } = response;
 
             if (workerDat.ids[response.id]) delete workerDat.ids[response.id];
@@ -212,12 +212,14 @@ export function request(
 }
 
 function sendWait(workerDat: workerDatType, id, url, method, funcArgs) {
-  workerDat.worker.postMessage({
-    id: id,
-    url: url,
-    method: method,
-    funcArgs: funcArgs,
-  });
+  workerDat.worker.postMessage(
+    JSON.stringify({
+      id: id,
+      url: url,
+      method: method,
+      funcArgs: funcArgs,
+    })
+  );
 }
 
 function checkCloseWorker(workerDat: workerDatType, workerID) {
