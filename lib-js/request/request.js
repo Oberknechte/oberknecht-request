@@ -111,7 +111,7 @@ function request(url, options, callback, globalOptionsAdd) {
                     worker: new worker_threads_1.Worker(path_1.default.resolve(__dirname, "../workers/request.worker"), {}),
                     ids: {},
                     callback: (response_) => {
-                        let response = response_;
+                        let response = JSON.parse(response_);
                         let { e, r } = response;
                         if (workerDat.ids[response.id])
                             delete workerDat.ids[response.id];
@@ -160,12 +160,12 @@ function request(url, options, callback, globalOptionsAdd) {
 }
 exports.request = request;
 function sendWait(workerDat, id, url, method, funcArgs) {
-    workerDat.worker.postMessage({
+    workerDat.worker.postMessage(JSON.stringify({
         id: id,
         url: url,
         method: method,
         funcArgs: funcArgs,
-    });
+    }));
 }
 function checkCloseWorker(workerDat, workerID) {
     if (Object.keys(workerDat.ids).length === 0 &&

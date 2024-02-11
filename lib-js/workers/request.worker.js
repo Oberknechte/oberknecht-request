@@ -7,7 +7,7 @@ const worker_threads_1 = require("worker_threads");
 const axios_1 = __importDefault(require("axios"));
 const oberknecht_utils_1 = require("oberknecht-utils");
 worker_threads_1.parentPort.on("message", (r) => {
-    let requestData = r;
+    let requestData = JSON.parse(r);
     const { method, funcArgs, id } = requestData;
     try {
         axios_1.default[method](...funcArgs)
@@ -19,16 +19,13 @@ worker_threads_1.parentPort.on("message", (r) => {
                 "status",
                 "statusText",
             ]);
-            worker_threads_1.parentPort.postMessage({ id: id, r: r_ });
+            worker_threads_1.parentPort.postMessage(JSON.stringify({ id: id, r: r_ }));
         })
             .catch((e) => {
-            worker_threads_1.parentPort.postMessage({ id: id, e: e });
+            worker_threads_1.parentPort.postMessage(JSON.stringify({ id: id, e: e }));
         });
     }
     catch (e) {
-        worker_threads_1.parentPort.postMessage({
-            id: id,
-            e: Error("Request failed", { cause: e }),
-        });
+        worker_threads_1.parentPort.postMessage(JSON.stringify({ id: id, e: Error("Request failed", { cause: e }) }));
     }
 });
