@@ -37,7 +37,7 @@ function request(url, options, callback, globalOptionsAdd) {
                 globalCallbacks.push(globalOptionsAdd.callbackOptions.callback);
             if (globalOptionsAdd.options)
                 globalOptions.options = oberknecht_utils_1.jsonModifiers.concatJSON([
-                    globalOptions.options,
+                    globalOptions.options ?? {},
                     globalOptionsAdd.options,
                 ]);
             Object.keys(globalOptionsAdd)
@@ -45,6 +45,7 @@ function request(url, options, callback, globalOptionsAdd) {
                 //   ["delayBetweenRequests", "returnOriginalResponse"].includes(a)
                 // )
                 .forEach((a) => {
+                // @ts-ignore
                 globalOptions[a] = globalOptionsAdd[a];
             });
             if (globalOptionsAdd.returnAfter)
@@ -52,15 +53,16 @@ function request(url, options, callback, globalOptionsAdd) {
         }
         options_ = oberknecht_utils_1.jsonModifiers.concatJSON([
             options_,
-            globalOptions.options,
+            globalOptions.options ?? {},
         ]);
         if ((globalOptions.delayBetweenRequests ?? 0) > 0) {
             if (requestTimes.length > 1 &&
-                Date.now() - requestTimes.at(-2) < globalOptions.delayBetweenRequests)
-                await (0, oberknecht_utils_1.sleep)(globalOptions.delayBetweenRequests *
+                Date.now() - requestTimes.at(-2) <
+                    (globalOptions.delayBetweenRequests ?? 0))
+                await (0, oberknecht_utils_1.sleep)((globalOptions.delayBetweenRequests ?? 0) *
                     requestTimes
                         .slice(0, -2)
-                        .filter((a) => Date.now() - a < globalOptions.delayBetweenRequests).length);
+                        .filter((a) => Date.now() - a < (globalOptions.delayBetweenRequests ?? 0)).length);
         }
         if ((0, oberknecht_utils_1.extendedTypeof)(callback) === "function")
             callback_ = callback;
@@ -73,8 +75,9 @@ function request(url, options, callback, globalOptionsAdd) {
                 options: options_,
             });
         });
-        let method = axios_1.default?.[options_?.method?.toLowerCase?.()]
-            ? options_.method.toLowerCase()
+        // @ts-ignore
+        let method = axios_1.default?.[options_?.method?.toLowerCase?.() ?? "GET"]
+            ? options_.method?.toLowerCase()
             : "get";
         let axiosFuncArgs;
         switch (method) {
@@ -92,6 +95,7 @@ function request(url, options, callback, globalOptionsAdd) {
             }
         }
         if (globalOptions.noWorker) {
+            // @ts-ignore
             axios_1.default[method](...axiosFuncArgs)
                 .then((r) => {
                 cb(r);

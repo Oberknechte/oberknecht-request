@@ -2,12 +2,13 @@ import { parentPort, workerData } from "worker_threads";
 import axios from "axios";
 import { filterByKeys } from "oberknecht-utils";
 
-parentPort.on("message", (r) => {
+parentPort?.on("message", (r) => {
   let requestData = JSON.parse(r);
   const { method, funcArgs, id } = requestData;
   try {
+    // @ts-ignore
     axios[method](...funcArgs)
-      .then((r) => {
+      .then((r: any) => {
         let r_: Record<string, any> = filterByKeys(r, [
           "config",
           "data",
@@ -16,13 +17,13 @@ parentPort.on("message", (r) => {
           "statusText",
         ]);
 
-        parentPort.postMessage(JSON.stringify({ id: id, r: r_ }));
+        parentPort?.postMessage(JSON.stringify({ id: id, r: r_ }));
       })
-      .catch((e) => {
-        parentPort.postMessage(JSON.stringify({ id: id, e: e }));
+      .catch((e: any) => {
+        parentPort?.postMessage(JSON.stringify({ id: id, e: e }));
       });
   } catch (e) {
-    parentPort.postMessage(
+    parentPort?.postMessage(
       JSON.stringify({ id: id, e: Error("Request failed", { cause: e }) })
     );
   }

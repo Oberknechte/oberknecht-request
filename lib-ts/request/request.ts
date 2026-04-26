@@ -17,7 +17,7 @@ import axios from "axios";
 let globalCallbacks: Function[] = [];
 // @ts-ignore
 let globalOptions: globalOptionsType = { options: {} };
-let requestTimes = [];
+let requestTimes: any[] = [];
 let requestNum = -1;
 type workerDatType = {
   worker: Worker;
@@ -30,10 +30,10 @@ let workers: Record<string, workerDatType> = {};
 let callbacks: Record<string, Function> = {};
 let num = 0;
 let workerNum = 0;
-let closeCheckIntervals = {};
+let closeCheckIntervals: Record<string, NodeJS.Timeout> = {};
 
 export function request(
-  url: string,
+  url: string | undefined,
   options?: requestOptions | typeof requestCallback,
   callback?: typeof requestCallback,
   globalOptionsAdd?: globalOptionsType
@@ -63,7 +63,7 @@ export function request(
 
       if (globalOptionsAdd.options)
         globalOptions.options = jsonModifiers.concatJSON([
-          globalOptions.options,
+          globalOptions.options ?? {},
           globalOptionsAdd.options,
         ]) as requestOptions;
 
@@ -71,7 +71,8 @@ export function request(
         // .filter((a) =>
         //   ["delayBetweenRequests", "returnOriginalResponse"].includes(a)
         // )
-        .forEach((a) => {
+        .forEach((a: string) => {
+          // @ts-ignore
           globalOptions[a] = globalOptionsAdd[a];
         });
 
@@ -80,20 +81,22 @@ export function request(
 
     options_ = jsonModifiers.concatJSON([
       options_,
-      globalOptions.options,
+      globalOptions.options ?? {},
     ]) as requestOptions;
 
     if ((globalOptions.delayBetweenRequests ?? 0) > 0) {
       if (
         requestTimes.length > 1 &&
-        Date.now() - requestTimes.at(-2) < globalOptions.delayBetweenRequests
+        Date.now() - requestTimes.at(-2) <
+          (globalOptions.delayBetweenRequests ?? 0)
       )
         await sleep(
-          globalOptions.delayBetweenRequests *
+          (globalOptions.delayBetweenRequests ?? 0) *
             requestTimes
               .slice(0, -2)
               .filter(
-                (a) => Date.now() - a < globalOptions.delayBetweenRequests
+                (a) =>
+                  Date.now() - a < (globalOptions.delayBetweenRequests ?? 0)
               ).length
         );
     }
@@ -111,8 +114,9 @@ export function request(
       });
     });
 
-    let method = axios?.[options_?.method?.toLowerCase?.()]
-      ? options_.method.toLowerCase()
+    // @ts-ignore
+    let method: string = axios?.[options_?.method?.toLowerCase?.() ?? "GET"]
+      ? options_.method?.toLowerCase()
       : "get";
 
     let axiosFuncArgs;
@@ -133,11 +137,12 @@ export function request(
     }
 
     if (globalOptions.noWorker) {
+      // @ts-ignore
       axios[method](...axiosFuncArgs)
-        .then((r) => {
+        .then((r: any) => {
           cb(r);
         })
-        .catch((e) => {
+        .catch((e: any) => {
           cb(e);
         });
     } else {
@@ -159,7 +164,7 @@ export function request(
             {}
           ),
           ids: {},
-          callback: (response_) => {
+          callback: (response_: string) => {
             let response = JSON.parse(response_);
             let { e, r } = response;
 
@@ -185,9 +190,9 @@ export function request(
       sendWait(workerDat, id, url_, method, axiosFuncArgs);
     }
 
-    function cb(r) {
-      let e;
-      let rd;
+    function cb(r: any) {
+      let e: any;
+      let rd: any;
       if (r instanceof Error || r.stack) {
         e = r;
         r = undefined;
@@ -211,7 +216,7 @@ export function request(
   });
 }
 
-function sendWait(workerDat: workerDatType, id, url, method, funcArgs) {
+function sendWait(workerDat: workerDatType, id: string, url: string, method: string, funcArgs: any[]) {
   workerDat.worker.postMessage(
     JSON.stringify({
       id: id,
@@ -222,7 +227,7 @@ function sendWait(workerDat: workerDatType, id, url, method, funcArgs) {
   );
 }
 
-function checkCloseWorker(workerDat: workerDatType, workerID) {
+function checkCloseWorker(workerDat: workerDatType, workerID: string) {
   if (
     Object.keys(workerDat.ids).length === 0 &&
     Object.keys(workers).length > (globalOptions.keepWorkerActiveNum ?? 0)
